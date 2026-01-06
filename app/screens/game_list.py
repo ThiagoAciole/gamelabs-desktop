@@ -5,7 +5,7 @@ import tkinter.filedialog as filedialog
 from tkinter import messagebox  # Necessário para confirmação de exclusão
 
 import customtkinter as ctk
-from PIL import Image
+from PIL import Image, ImageDraw
 from utils.audio import AudioManager
 from utils.icons import add_legend, load_ui_assets
 from utils.inputs import InputManager
@@ -27,22 +27,22 @@ class GameList(ctk.CTkFrame):
         self.root = self.winfo_toplevel()
         # Inicializa InputManager
         self.inputs = InputManager(self.winfo_toplevel())
+        self.default_cover_path = get_asset_path("default.png")
 
         self.covers_path = os.path.join(get_games_root(), self.console_name, "Covers")
         if not os.path.exists(self.covers_path):
             os.makedirs(self.covers_path, exist_ok=True)
 
         self.games = []
-        self.cover_size = (160, 220)
+        self.cover_size = (180, 240)
 
         self.load_games_from_folder()
 
         self.selected_index = 0
         self.visible_start = 0
         self.visible_count = 5
-        self.card_width = 200
-        self.card_height = 300
-
+        self.card_width = 250
+        self.card_height = 350
 
         # Layout Principal
         self.grid_rowconfigure(0, weight=0)
@@ -64,15 +64,51 @@ class GameList(ctk.CTkFrame):
 
         self.focus_set()
         self.setup_controls()
-        
+
     def setup_controls(self):
         self.inputs.bind_screen_controls(
             on_left=self.move_left,
             on_right=self.move_right,
             on_confirm=self.launch_current_game,
-            on_back=self.go_back  # Aqui o InputManager vai ligar o ESC ao voltar
+            on_back=self.go_back,  # Aqui o InputManager vai ligar o ESC ao voltar
         )
-        
+
+    def round_corners(
+        self,
+        img: Image.Image,
+        radius: int,
+        border_width: int = 2,
+        border_color=(51, 51, 51, 255),
+    ):
+        img = img.convert("RGBA")
+        w, h = img.size
+
+        # Máscara arredondada
+        mask = Image.new("L", (w, h), 0)
+        mask_draw = ImageDraw.Draw(mask)
+        mask_draw.rounded_rectangle(
+            [(0, 0), (w - 1, h - 1)],
+            radius=radius,
+            fill=255,
+        )
+
+        # Aplica transparência
+        img.putalpha(mask)
+
+        # Desenha SOMENTE a borda
+        draw = ImageDraw.Draw(img)
+        draw.rounded_rectangle(
+            [
+                (border_width // 2, border_width // 2),
+                (w - border_width // 2 - 1, h - border_width // 2 - 1),
+            ],
+            radius=radius,
+            outline=border_color,
+            width=border_width,
+        )
+
+        return img
+
     def crop_image(self, pil_img, target_size):
         """Redimensiona mantendo proporção e corta o excesso (Center Crop)"""
         target_w, target_h = target_size
@@ -121,20 +157,40 @@ class GameList(ctk.CTkFrame):
 
                     cover_img = None
                     possible_cover_path = None
+                    found_cover = False
 
+                    # 1️⃣ tenta achar capa real
                     for ext in img_extensions:
                         path = os.path.join(self.covers_path, display_name + ext)
                         if os.path.exists(path):
                             try:
                                 pil_img = Image.open(path)
                                 pil_cropped = self.crop_image(pil_img, self.cover_size)
-                                cover_img = ctk.CTkImage(
-                                    pil_cropped, size=self.cover_size
+                                pil_rounded = self.round_corners(
+                                    pil_cropped, radius=10, border_width=1
                                 )
+
+                                cover_img = ctk.CTkImage(pil_rounded, size=self.cover_size)
                                 possible_cover_path = path
+                                found_cover = True
                             except Exception:
                                 pass
                             break
+
+                    # 2️⃣ se NÃO achou capa → usa default.png
+                    if not found_cover and os.path.exists(self.default_cover_path):
+                        try:
+                            pil_img = Image.open(self.default_cover_path)
+                            pil_cropped = self.crop_image(pil_img, self.cover_size)
+                            pil_rounded = self.round_corners(
+                                pil_cropped, radius=10, border_width=1
+                            )
+
+                            cover_img = ctk.CTkImage(pil_rounded, size=self.cover_size)
+                            possible_cover_path = None
+                        except Exception:
+                            cover_img = None
+
 
                     self.games.append(
                         {
@@ -160,17 +216,17 @@ class GameList(ctk.CTkFrame):
             height=4,
             mode="indeterminate",
             progress_color="#6200ea",
-            fg_color="#333333"
+            fg_color="#333333",
         )
         # Tenta forçar um intervalo rápido de atualização (5ms)
         try:
-            progress_bar.start(5) 
+            progress_bar.start(5)
         except:
             progress_bar.start()
 
         logo_path = get_asset_path("logo.png")
         logo_size = (100, 100)
-        
+
         logo_loaded = False
 
         if os.path.exists(logo_path):
@@ -186,14 +242,14 @@ class GameList(ctk.CTkFrame):
                 logo_loaded = True
             except:
                 logo_loaded = False
-        
+
         if not logo_loaded:
             progress_bar.place(relx=0.5, rely=0.5, anchor="center")
             ctk.CTkLabel(
-                loading_window, 
-                text="Carregando...", 
+                loading_window,
+                text="Carregando...",
                 text_color="gray",
-                font=("Arial", 12)
+                font=("Arial", 12),
             ).place(relx=0.5, rely=0.55, anchor="center")
 
         loading_window.update()
@@ -543,9 +599,11 @@ class GameList(ctk.CTkFrame):
         self.btn_right.grid(row=0, column=2)
 
     def update_carousel(self):
+        # Limpa os widgets anteriores
         for w in self.cards_container.winfo_children():
             w.destroy()
 
+        # Verifica se tem jogos
         if not self.games:
             self.btn_left.grid_remove()
             self.btn_right.grid_remove()
@@ -562,17 +620,25 @@ class GameList(ctk.CTkFrame):
             ).pack(pady=10)
             return
 
+        # Mostra botões de navegação
         self.btn_left.grid()
         self.btn_right.grid()
         self.lbl_selected_game.grid()
         self.lbl_selected_game.configure(text=self.games[self.selected_index]["name"])
 
+        # --- A MÁGICA ACONTECE AQUI ---
+        # 1. Criamos um "Container Interno" transparente.
+        #    O 'expand=True' faz esse container flutuar no CENTRO da tela.
+        inner_container = ctk.CTkFrame(self.cards_container, fg_color="transparent")
+        inner_container.pack(expand=True)
+
         end = min(self.visible_start + self.visible_count, len(self.games))
         for i, game in enumerate(self.games[self.visible_start : end]):
             real_index = self.visible_start + i
             is_sel = real_index == self.selected_index
+
             card = ctk.CTkFrame(
-                self.cards_container,
+                inner_container,
                 width=self.card_width,
                 height=self.card_height,
                 fg_color="#1a1a1a" if is_sel else "#0d0d0d",
@@ -580,14 +646,20 @@ class GameList(ctk.CTkFrame):
                 border_width=3 if is_sel else 2,
                 corner_radius=15,
             )
-            card.pack(side="left", padx=10, expand=True)
+
+            # 3. Usamos expand=False para que eles fiquem coladinhos (respeitando apenas o padx)
+            card.pack(side="left", padx=15, expand=False)
+
+            # Impede que o frame encolha para o tamanho do conteúdo (mantém tamanho fixo)
             card.pack_propagate(False)
 
             display_img = game["cover"] if game["cover"] else self.icons["placeholder"]
+
             img_lbl = ctk.CTkLabel(
                 card, text="", image=display_img, fg_color="transparent"
             )
             img_lbl.place(relx=0.5, rely=0.45, anchor="center")
+
             lbl_name = ctk.CTkLabel(
                 card,
                 text=game["name"],
