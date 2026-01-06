@@ -1,5 +1,6 @@
 import os
 import shutil
+import subprocess
 import time
 import tkinter.filedialog as filedialog
 from tkinter import messagebox  # Necessário para confirmação de exclusão
@@ -170,7 +171,9 @@ class GameList(ctk.CTkFrame):
                                     pil_cropped, radius=10, border_width=1
                                 )
 
-                                cover_img = ctk.CTkImage(pil_rounded, size=self.cover_size)
+                                cover_img = ctk.CTkImage(
+                                    pil_rounded, size=self.cover_size
+                                )
                                 possible_cover_path = path
                                 found_cover = True
                             except Exception:
@@ -190,7 +193,6 @@ class GameList(ctk.CTkFrame):
                             possible_cover_path = None
                         except Exception:
                             cover_img = None
-
 
                     self.games.append(
                         {
@@ -256,6 +258,35 @@ class GameList(ctk.CTkFrame):
         loading_window.attributes("-topmost", False)
         return loading_window
 
+    def create_windows_shortcut(self, target_path, shortcut_path):
+        target_path = os.path.abspath(target_path)
+        shortcut_path = os.path.abspath(shortcut_path)
+
+        ps_script = f"""
+    $WshShell = New-Object -ComObject WScript.Shell
+    $Shortcut = $WshShell.CreateShortcut('{shortcut_path}')
+    $Shortcut.TargetPath = '{target_path}'
+    $Shortcut.WorkingDirectory = '{os.path.dirname(target_path)}'
+    $Shortcut.IconLocation = '{target_path},0'
+    $Shortcut.Save()
+    """
+
+        subprocess.run(
+            [
+                "powershell",
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                ps_script,
+            ],
+            check=True,
+        )
+
+        # 🔍 DEBUG CRÍTICO
+        if not os.path.exists(shortcut_path):
+            raise Exception("Falha ao criar atalho (.lnk)")
+
     def launch_current_game(self):
         if not self.games:
             return
@@ -314,38 +345,39 @@ class GameList(ctk.CTkFrame):
 
     def add_pc_game_action(self):
         AudioManager.play_sound("press.mp3")
+
         file_path = filedialog.askopenfilename(
-            title="Selecione o executável ou atalho",
-            filetypes=[("Jogos", "*.exe *.lnk *.bat")],
+            title="Selecione o executável do jogo",
+            filetypes=[("Jogos de PC", "*.exe *.lnk")],
         )
         if not file_path:
             return
 
+        dest_folder = os.path.join(get_games_root(), "Games")
+        os.makedirs(dest_folder, exist_ok=True)
+
         filename = os.path.basename(file_path)
         name_only, ext = os.path.splitext(filename)
-        dest_folder = os.path.join(get_games_root(), "Games")
-        if not os.path.exists(dest_folder):
-            os.makedirs(dest_folder)
 
         try:
             if ext.lower() == ".lnk":
-                shutil.copy(file_path, os.path.join(dest_folder, filename))
+                dest_path = os.path.join(dest_folder, filename)
+                shutil.copy(file_path, dest_path)
             else:
-                bat_path = os.path.join(dest_folder, f"{name_only}.bat")
-                with open(bat_path, "w") as bat_file:
-                    bat_file.write(f'@echo off\nstart "" "{file_path}"')
+                dest_path = os.path.join(dest_folder, f"{name_only}.lnk")
+                self.create_windows_shortcut(file_path, dest_path)
+
+            print(f"✅ Jogo adicionado: {dest_path}")
 
             self.load_games_from_folder()
+
             self.selected_index = max(0, len(self.games) - 1)
-            # Atualiza visualização para focar no novo jogo
-            if len(self.games) > self.visible_count:
-                self.visible_start = max(0, len(self.games) - self.visible_count)
-            else:
-                self.visible_start = 0
+            self.visible_start = max(0, len(self.games) - self.visible_count)
+
             self.update_carousel()
 
         except Exception as e:
-            print(f"Erro ao adicionar jogo: {e}")
+            messagebox.showerror("Erro", f"Erro ao adicionar jogo:\n{e}")
 
     def open_context_menu(self, event, game_index):
         root = self.winfo_toplevel()

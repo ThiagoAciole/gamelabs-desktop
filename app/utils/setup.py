@@ -24,35 +24,23 @@ def run_game(console_name, rom_filename):
         print(f"❌ ERRO: Arquivo não encontrado: {rom_path}")
         return
 
-    # === CASO 1: PC GAMES ===
+    # =====================================================
+    # 🎮 CASO 1: GAMES DE PC (ATALHO .LNK)
+    # =====================================================
     if console_name == "Games":
         try:
-            print("💻 Iniciando Games de PC...")
-            work_dir = os.path.dirname(rom_path)
-
-            if rom_path.lower().endswith(".lnk"):
-                os.startfile(rom_path, cwd=work_dir)
-            else:
-                print(f"   Executando: {rom_path}")
-
-                # Configura flag para não abrir janela extra se for .bat ou .cmd
-                no_window_flag = 0
-                if os.name == "nt":
-                    no_window_flag = subprocess.CREATE_NO_WINDOW
-
-                process = subprocess.Popen(
-                    [rom_path],
-                    cwd=work_dir,
-                    creationflags=no_window_flag,  # Aplica aqui também por garantia
-                )
-                process.wait()
-
-            print("✅ Jogo fechado.")
+            print("💻 Iniciando jogo de PC...")
+            os.startfile(
+                rom_path
+            )  # Windows resolve tudo (exe, argumentos, working dir)
+            print("✅ Jogo iniciado.")
         except Exception as e:
-            print(f"❌ Erro Games de PC: {e}")
+            print(f"❌ Erro ao iniciar jogo de PC: {e}")
         return
 
-    # === CASO 2: EMULADORES (RetroArch) ===
+    # =====================================================
+    # 🕹️ CASO 2: EMULADORES (RetroArch)
+    # =====================================================
     if not os.path.exists(RETROARCH_EXE):
         print("❌ ERRO: retroarch.exe não encontrado!")
         return
@@ -64,22 +52,24 @@ def run_game(console_name, rom_filename):
 
     full_core_path = os.path.join(CORES_DIR, core_dll)
 
-    # Nota: Removi o --verbose para limpar a saída, já que não veremos o terminal
-    cmd = [RETROARCH_EXE, "-L", full_core_path, rom_path, "-f"]
+    cmd = [
+        RETROARCH_EXE,
+        "-L",
+        full_core_path,
+        rom_path,
+        "-f",
+    ]
 
     print("🚀 Iniciando emulador...")
 
     try:
-        # Define a flag para ocultar a janela do console
-        creation_flags = 0
-        if os.name == "nt":  # Verifica se é Windows
-            creation_flags = subprocess.CREATE_NO_WINDOW
+        creation_flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
 
-        # Passamos creationflags aqui
         process = subprocess.Popen(
-            cmd, cwd=get_system_root(), creationflags=creation_flags
+            cmd,
+            cwd=get_system_root(),
+            creationflags=creation_flags,
         )
-
         process.wait()
 
         print("✅ Emulador encerrado.")
