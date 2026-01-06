@@ -1,0 +1,93 @@
+# ============================================================
+# 🔒 IGNORAR PASTAS E ARQUIVOS DE BUILD
+# ============================================================
+
+# Pastas de compilação e distribuição
+/release/
+/build/
+/dist/
+/__pycache__/
+
+# Pastas de Conteúdo (Jogos e Capas não devem ir para o Git)
+/game
+/covers
+/games
+/system
+
+# PyInstaller e intermediários
+*.spec
+*.manifest
+*.bak
+
+# ============================================================
+# 🧰 IGNORAR CONFIGS LOCAIS E AMBIENTES
+# ============================================================
+
+# Configurações do VSCode
+.vscode/
+
+# Arquivos de ambiente e segredos
+.env
+.env.local
+
+# Configs de IDEs
+.idea/
+*.iml
+*.toml
+
+# ============================================================
+# 🐍 IGNORAR ARQUIVOS TEMPORÁRIOS DE PYTHON
+# ============================================================
+
+*.py[cod]
+*.pyd
+*.pyo
+*.pdb
+
+# Cache de pacotes
+*.egg
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# ============================================================
+# 🎮 ARQUIVOS DE JOGOS E DISCO (RECURSIVO EM QUALQUER PASTA)
+# ============================================================
+# Isso garante que se você criar uma pasta "Teste" e jogar uma ISO lá,
+# o Git vai ignorar automaticamente.
+
+# Imagens de disco comuns
+*.iso
+*.bin
+*.cue
+*.chd
+*.img
+*.mdf
+*.mds
+
+# Arquivos específicos de consoles (PSP, PS1, etc)
+*.cso
+*.pbp
+*.ecm
+
+# Arquivos compactados (muitas vezes contêm ROMs)
+*.zip
+*.7z
+*.rar
+*.tar
+*.gz
+
+# ============================================================
+# 💾 ARQUIVOS BINÁRIOS E DE SISTEMA
+# ============================================================
+
+# Bibliotecas compiladas
+*.dll
+*.so
+*.dylib
+
+# Logs e Temporários
+*.log
+*.tmp
+*.temp
+*.old
