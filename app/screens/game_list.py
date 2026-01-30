@@ -139,57 +139,6 @@ class GameList(ctk.CTkFrame):
                         }
                     )
 
-    def _play_gif(self, master, gif_path):
-        """Toca um GIF animado em um CTkLabel."""
-        if not os.path.exists(gif_path):
-            return False
-
-        try:
-            pil_gif = Image.open(gif_path)
-            
-            # Extrai quadros
-            frames = []
-            durations = []
-            
-            for frame in ImageSequence.Iterator(pil_gif):
-                # Converte para RGBA e redimensiona
-                frame = frame.convert("RGBA")
-                # Mantém tamanho original ou define um padrão (ex: 150x150)
-                # Se quiser redimensionar: frame = frame.resize((150, 150))
-                
-                # Se a imagem for muito grande, redimensionamos para caber no loading
-                if frame.width > 300 or frame.height > 300:
-                    frame.thumbnail((300, 300))
-                
-                ctk_img = ctk.CTkImage(
-                    light_image=frame, 
-                    dark_image=frame, 
-                    size=(frame.width, frame.height)
-                )
-                frames.append(ctk_img)
-                durations.append(frame.info.get('duration', 100))
-            
-            if not frames:
-                return False
-
-            label = ctk.CTkLabel(master, text="", image=frames[0])
-            label.place(relx=0.5, rely=0.45, anchor="center")
-
-            def update_frame(idx):
-                if not master.winfo_exists():
-                    return
-                # Atualiza imagem
-                label.configure(image=frames[idx])
-                # Agenda próximo quadro
-                next_idx = (idx + 1) % len(frames)
-                master.after(durations[idx], update_frame, next_idx)
-
-            update_frame(0)
-            return True
-
-        except Exception as e:
-            print(f"Erro ao carregar GIF: {e}")
-            return False
 
     def create_loading_screen(self):
         loading_window = ctk.CTkToplevel(self.root)
@@ -214,34 +163,28 @@ class GameList(ctk.CTkFrame):
         except:
             progress_bar.start()
 
-        logo_png = get_icon_path("logo.png")
-        logo_gif = get_icon_path("logo.gif") # Suporte a GIF
+        logo_path = get_icon_path("logo.png")
 
-        logo_loaded = False
-
-        # Tenta carregar GIF primeiro
-        if os.path.exists(logo_gif):
-            logo_loaded = self._play_gif(loading_window, logo_gif)
-            if logo_loaded:
-                progress_bar.place(relx=0.5, rely=0.60, anchor="center")
-
-        # Se não carregou GIF (ou não existe), tenta PNG estático
-        if not logo_loaded and os.path.exists(logo_png):
+        if os.path.exists(logo_path):
             try:
-                pil_img = Image.open(logo_png)
-                logo_size = (100, 100)
+                pil_img = Image.open(logo_path)
+                logo_size = (150, 150)
                 big_logo = ctk.CTkImage(
                     light_image=pil_img, dark_image=pil_img, size=logo_size
                 )
                 ctk.CTkLabel(loading_window, text="", image=big_logo).place(
                     relx=0.5, rely=0.45, anchor="center"
                 )
-                progress_bar.place(relx=0.5, rely=0.55, anchor="center")
-                logo_loaded = True
+                progress_bar.place(relx=0.5, rely=0.60, anchor="center")
             except:
-                logo_loaded = False
-
-        if not logo_loaded:
+                progress_bar.place(relx=0.5, rely=0.5, anchor="center")
+                ctk.CTkLabel(
+                    loading_window,
+                    text="Carregando...",
+                    text_color="gray",
+                    font=Fonts.CAPTION,
+                ).place(relx=0.5, rely=0.55, anchor="center")
+        else:
             progress_bar.place(relx=0.5, rely=0.5, anchor="center")
             ctk.CTkLabel(
                 loading_window,
