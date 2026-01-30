@@ -22,7 +22,7 @@ echo   📂 Diretório do projeto: %BASE_DIR%
 echo.
 
 :: --- Caminhos dos Arquivos ---
-set "ICON_PATH=%BASE_DIR%\app\assets\icon.ico"
+set "ICON_PATH=%BASE_DIR%\app\assets\images\icons\icon.ico"
 set "MAIN_FILE=%BASE_DIR%\app\main.py"
 
 :: --- Saídas ---
@@ -80,6 +80,7 @@ pyinstaller ^
  --add-data "%BASE_DIR%\app\assets;app/assets" ^
  --add-data "%BASE_DIR%\app\screens;app/screens" ^
  --add-data "%BASE_DIR%\app\utils;app/utils" ^
+ --add-data "%BASE_DIR%\app\components;app/components" ^
  "%MAIN_FILE%"
 
 :: ============================================================

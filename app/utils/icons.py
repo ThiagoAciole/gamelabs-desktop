@@ -3,12 +3,12 @@ import customtkinter as ctk
 from customtkinter import CTkImage
 from PIL import Image
 
-from .paths import get_button_path, get_icon_path
+from .paths import get_button_path, get_icon_path, get_ui_path, get_asset_path
 
 
-def load_ctk_image(name: str, size=(30, 30)):
+def load_image_from_path(path: str, size=(30, 30)):
+    """Carrega uma CTkImage de um caminho absoluto/completo"""
     try:
-        path = get_icon_path(name)
         if not os.path.exists(path):
             print(f"⚠️ Imagem não encontrada: {path}")
             return None
@@ -16,44 +16,30 @@ def load_ctk_image(name: str, size=(30, 30)):
         img = Image.open(path)
         return CTkImage(light_image=img, dark_image=img, size=size)
     except Exception as e:
-        print(f"❌ Erro ao carregar {name}: {e}")
-        return None
-
-
-def load_button_image(name: str, size=(30, 30)):
-    try:
-        img = Image.open(get_button_path(name))
-        return CTkImage(light_image=img, dark_image=img, size=size)
-    except Exception:
+        print(f"❌ Erro ao carregar imagem de {path}: {e}")
         return None
 
 
 def load_ui_assets():
+    """Carrega todos os assets de UI usando os caminhos organizados"""
     return {
         # Navegação
-        "arrow_left": load_ctk_image("chevron-left.png", (30, 30)),
-        "arrow_right": load_ctk_image("chevron-right.png", (30, 30)),
-        "return": load_ctk_image("return.png", (30, 30)),
-        "menu": load_ctk_image("menu.png", (30, 30)),
-        "edit": load_ctk_image("edit.png", (30, 30)),
-        "edit_image": load_ctk_image("edit-image.png", (30, 30)),
-        "trash": load_ctk_image("trash.png", (30, 30)),
-        # Identidade
-        "logo": load_ctk_image("logo.png", (40, 40)),
-        "placeholder": load_ctk_image("gamepad.png", (80, 80)),
-        "not_found":   load_ctk_image("notfound.png", (200, 200)),
-        "add": load_ctk_image("add.png", (30, 30)),
-        # Botões (Controles)
-        "btn_a": load_button_image("A.png"),
-        "btn_b": load_button_image("B.png"),
-        "btn_x": load_button_image("X.png"),
+        "arrow_left": load_image_from_path(get_ui_path("chevron-left.png")),
+        "arrow_right": load_image_from_path(get_ui_path("chevron-right.png")),
+        "return": load_image_from_path(get_ui_path("return.png")),
+        "menu": load_image_from_path(get_ui_path("menu.png")),
+        "edit": load_image_from_path(get_ui_path("edit.png")),
+        "edit_image": load_image_from_path(get_ui_path("edit-image.png")),
+        "trash": load_image_from_path(get_ui_path("trash.png")),
         
+        # Identidade
+        "logo": load_image_from_path(get_icon_path("logo.png"), (40, 40)),
+        "placeholder": load_image_from_path(get_button_path("gamepad.png"), (80, 80)),
+        "not_found":   load_image_from_path(get_ui_path("notfound.png"), (200, 200)),
+        "add": load_image_from_path(get_ui_path("add.png")),
+        
+        # Botões (Controles)
+        "btn_a": load_image_from_path(get_button_path("A.png")),
+        "btn_b": load_image_from_path(get_button_path("B.png")),
+        "btn_x": load_image_from_path(get_button_path("X.png")),
     }
-
-
-def add_legend(screen, text, icon):
-    f = ctk.CTkFrame(screen, fg_color="transparent")
-    f.pack(side="left", padx=20)
-    if icon:
-        ctk.CTkLabel(f, text="", image=icon).pack(side="left", padx=5)
-    ctk.CTkLabel(f, text=text, text_color="#ccc", font=("Kanit", 14)).pack(side="left")

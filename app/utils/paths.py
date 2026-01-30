@@ -34,6 +34,8 @@ def get_internal_root():
 
 # --- CAMINHOS BASE ---
 
+DEFAULT_CONSOLES = ["Playstation", "Playstation 2", "PSP", "Games"]
+
 
 def get_assets_root():
     """Retorna o caminho da pasta assets."""
@@ -54,7 +56,16 @@ def get_system_root():
     return path
 
 
+def initialize_folders():
+    """Garante que todas as pastas base e de consoles existam."""
+    get_system_root()
+    get_games_root()
+    for console in DEFAULT_CONSOLES:
+        get_game_path(console)
+
+
 # --- FUNÇÕES DE BUSCA DE ARQUIVOS ---
+
 
 
 def get_asset_path(filename: str = "") -> str:
@@ -79,18 +90,32 @@ def get_game_path(console_folder: str, rom_filename: str = "") -> str:
     return os.path.join(console_path, rom_filename)
 
 
-# --- ALIAS / ATALHOS (Para manter compatibilidade) ---
+# --- ALIAS / ATALHOS ORGANIZADOS ---
+
+
+def get_audio_path(filename: str) -> str:
+    """Busca arquivos de áudio em assets/audio"""
+    return os.path.join(get_assets_root(), "audio", filename)
 
 
 def get_icon_path(name: str):
-    """Atalho para pegar ícones direto da raiz de assets ou subpasta"""
-    # Se você tiver uma pasta 'icons' dentro de assets, mude para:
-    # return get_asset_path(os.path.join("icons", name))
-    return get_asset_path(name)
+    """Busca ícones em assets/images/icons"""
+    return os.path.join(get_assets_root(), "images", "icons", name)
 
 
 def get_button_path(name: str):
-    return get_asset_path(name)
+    """Busca botões em assets/images/buttons"""
+    return os.path.join(get_assets_root(), "images", "buttons", name)
+
+
+def get_ui_path(name: str):
+    """Busca imagens de UI em assets/images/ui"""
+    return os.path.join(get_assets_root(), "images", "ui", name)
+
+
+def get_console_path(name: str):
+    """Busca imagens de console em assets/images/consoles"""
+    return os.path.join(get_assets_root(), "images", "consoles", name)
 
 
 # --- DEBUG (Pode remover depois) ---

@@ -70,8 +70,7 @@ def run_game(console_name, rom_filename):
             cwd=get_system_root(),
             creationflags=creation_flags,
         )
-        process.wait()
-
-        print("✅ Emulador encerrado.")
+        return process # Retorna o processo para controle externo
     except Exception as e:
         print(f"❌ Falha no subprocesso: {e}")
+        return None

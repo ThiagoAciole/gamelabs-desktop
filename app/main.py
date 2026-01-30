@@ -2,19 +2,25 @@ import customtkinter as ctk
 from screens.game_list import GameList
 from screens.home_screen import HomeScreen
 from utils.audio import AudioManager
-from utils.paths import get_asset_path
+from utils.theme import Colors
+from utils.paths import get_asset_path, get_icon_path, initialize_folders
 
 
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
 
+        # Inicializa as pastas do sistema
+        initialize_folders()
+
         self.title("GameLabs")
         self.attributes("-fullscreen", True)
+        self.configure(fg_color=Colors.BACKGROUND)
+
 
         # Tenta carregar o ícone da janela
         try:
-            self.iconbitmap(get_asset_path("icon.ico"))
+            self.iconbitmap(get_icon_path("icon.ico"))
         except Exception as e:
             print(f"Aviso: Ícone não encontrado ou formato inválido. {e}")
 

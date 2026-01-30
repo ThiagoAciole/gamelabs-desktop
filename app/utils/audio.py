@@ -2,7 +2,7 @@ import os
 
 import pygame
 
-from .paths import get_asset_path
+from .paths import get_audio_path
 
 
 class AudioManager:
@@ -25,7 +25,7 @@ class AudioManager:
     def play_bgm(cls, filename="bgm.mp3", volume=0.5):
         """Toca a música de fundo em loop"""
         cls.init_mixer()
-        music_path = get_asset_path(filename)
+        music_path = get_audio_path(filename)
 
         if not os.path.exists(music_path):
             print(f"⚠️ Música não encontrada: {music_path}")
@@ -45,7 +45,7 @@ class AudioManager:
 
         # Carrega no cache se não estiver lá
         if filename not in cls._sounds:
-            path = get_asset_path(filename)
+            path = get_audio_path(filename)
             if os.path.exists(path):
                 try:
                     sound = pygame.mixer.Sound(path)

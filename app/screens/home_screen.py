@@ -2,13 +2,18 @@ import customtkinter as ctk
 
 # Importamos o carregador do dicionário e a função para imagens dinâmicas (consoles)
 from utils.audio import AudioManager
-from utils.icons import add_legend, load_ctk_image, load_ui_assets
+from utils.icons import  load_image_from_path, load_ui_assets
 from utils.inputs import InputManager
+from utils.paths import get_console_path
+from utils.theme import Colors, Dimensions
 
+# Componentes
+from components.header import Header
+from components.footer import Footer
 
 class HomeScreen(ctk.CTkFrame):
     def __init__(self, parent, on_console_select):
-        super().__init__(parent, fg_color="black")
+        super().__init__(parent, fg_color=Colors.BACKGROUND)
         self.on_console_select = on_console_select
         # Inicializa o InputManager pegando a janela raiz
         self.inputs = InputManager(self.winfo_toplevel())
@@ -29,12 +34,12 @@ class HomeScreen(ctk.CTkFrame):
         self.console_images = {}
         for c in self.consoles:
             # Usamos a função importada para carregar itens que não estão no dict fixo
-            self.console_images[c["name"]] = load_ctk_image(c["img"], (400, 400))
+            self.console_images[c["name"]] = load_image_from_path(get_console_path(c["img"]), (400, 400))
 
         # --- Layout ---
-        self.grid_rowconfigure(0, weight=0)
-        self.grid_rowconfigure(1, weight=1)
-        self.grid_rowconfigure(2, weight=0)
+        self.grid_rowconfigure(0, weight=0) # Header
+        self.grid_rowconfigure(1, weight=1) # Carousel
+        self.grid_rowconfigure(2, weight=0) # Footer
         self.grid_columnconfigure(0, weight=1)
 
         self.create_header()
@@ -54,14 +59,22 @@ class HomeScreen(ctk.CTkFrame):
         )
 
     def create_header(self):
-        header = ctk.CTkFrame(self, fg_color="transparent", height=60)
-        header.grid(row=0, column=0, sticky="ew", padx=30, pady=20)
-
-        # Usa o dict self.icons
-        ctk.CTkLabel(header, text="", image=self.icons["logo"]).pack(side="left")
+        # Usamos o componente Header desacoplado
+        # Na home, temos Logo a esquerda e Menu a direita (Action)
+        # Como o Header padrão espera titulo no meio e back na esquerda, podemos adaptar ou instanciar elementos manuais se fugir muito do padrão.
+        # O Header component atual suporta: title, icon_back, action_icon.
+        # Home header é um pouco diferente (Logo a esquerda). 
+        # Vamos manter customizado aqui ou melhorar o componente Header? 
+        # Vamos usar um frame simples aqui pois o Header component foi feito pensado em "Tela com Titulo".
+        
+        # Mas para "Code Clean", vamos fazer um header container
+        header_frame = ctk.CTkFrame(self, fg_color="transparent", height=Dimensions.HEADER_HEIGHT)
+        header_frame.grid(row=0, column=0, sticky="ew", padx=30, pady=20)
+        
+        ctk.CTkLabel(header_frame, text="", image=self.icons["logo"]).pack(side="left")
 
         ctk.CTkButton(
-            header,
+            header_frame,
             text="",
             image=self.icons["menu"],
             width=40,
@@ -85,7 +98,7 @@ class HomeScreen(ctk.CTkFrame):
             width=60,
             height=60,
             fg_color="transparent",
-            hover_color="#111",
+            hover_color=Colors.SURFACE_HOVER,
             command=self.prev_console,
         )
         self.btn_prev.grid(row=0, column=0, sticky="w", padx=30)
@@ -111,16 +124,20 @@ class HomeScreen(ctk.CTkFrame):
             width=60,
             height=60,
             fg_color="transparent",
-            hover_color="#111",
+            hover_color=Colors.SURFACE_HOVER,
             command=self.next_console,
         )
         self.btn_next.grid(row=0, column=2, sticky="e", padx=30)
 
     def create_footer(self):
-        footer = ctk.CTkFrame(self, fg_color="transparent", height=50)
-        footer.grid(row=3, column=0, pady=30)
-
-        add_legend(footer, "Confirmar", self.icons["btn_a"])
+        footer = Footer(self)
+        footer.grid(row=2, column=0, pady=30)
+        
+        # Centralizar o footer se quiser? O grid acima já centraliza o frame na coluna 0.
+        # Mas os itens dentro do footer são pack left.
+        # Vamos usar um frame wrapper ou deixar assim.
+        
+        footer.add_legend("Confirmar", self.icons["btn_a"])
 
     def update_display(self):
         data = self.consoles[self.current_index]
